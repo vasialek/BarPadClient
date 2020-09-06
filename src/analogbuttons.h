@@ -34,6 +34,7 @@ public:
 AnalogButtons::AnalogButtons(unsigned char inputPin)
 {
     _inputPin = inputPin;
+    pinMode(_inputPin, INPUT_PULLUP);
 }
 
 int AnalogButtons::GetPressedButton()
