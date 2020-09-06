@@ -52,6 +52,7 @@ void setup()
 
 void loop()
 {
+  int buttonPressed = 0;
   switch (_currentState)
   {
   case WiFiClientInitializing:
@@ -76,6 +77,29 @@ void loop()
     break;
 
   case WiFiServing:
+    buttonPressed = _buttons.GetPressedButton();
+    if (buttonPressed > 0)
+    {
+      Serial.print("Got pressed button: ");
+      Serial.println(buttonPressed);
+      switch (buttonPressed)
+      {
+      case 1:
+        Serial.print("Waiter is called: ");
+        Serial.println(_requestsRepository.SetWaiterIsRequested());
+        break;
+      case 2:
+        Serial.print("Bill is requested: ");
+        Serial.println(_requestsRepository.SetBillIsRequested());
+        break;
+      case 3:
+        Serial.println("All requests are canceled.");
+        _requestsRepository.CancelAllRequest();
+        break;
+      default:
+        break;
+      }
+    }
     break;
     
 
