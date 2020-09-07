@@ -2,9 +2,9 @@
 #define COMMUNICATOR_H
 
 #ifdef ESP32
-    #include <HTTPClient.h>
+#include <HTTPClient.h>
 #else
-    #include <ESP8266HTTPClient.h>
+#include <ESP8266HTTPClient.h>
 #endif
 #include <stdio.h>
 #include "interfaces\icommunicator.h"
@@ -12,15 +12,27 @@
 class Communicator : public ICommunicator
 {
 private:
+    const ulong TimeoutMs = 10000;
     HTTPClient _client;
-    String _baseUrl;
+    String _host;
+    String _uri;
+    int _port;
+
+    String _heartbeatUri;
+    String _requestWaiterUri;
+    String _requestBillUri;
+
     String _barPadId;
     String _heartbeatJson;
     // Format bill/waiter requests payload
     const char *_requestFmt = "{\"tableid\":\"%s\",\"requestid\":\"%s\"}";
     char *_requestBuffer = nullptr;
+
+    bool IsHttpClientConnected(HTTPClient *client, ulong timeoutMs);
+    void DebugRequestUri(const char *msg, const char *host, const char *uri, int port);
+
 public:
-    Communicator(const char* baseUrl, const char* barPadId);
+    Communicator(String host, String uri, int port, const char *barPadId);
     virtual bool Heartbeat() override;
     virtual bool RequestWaiter(const char *requestId) override;
     virtual bool RequestBill(const char *requestId) override;
@@ -28,9 +40,17 @@ public:
     ~Communicator();
 };
 
-Communicator::Communicator(const char* baseUrl, const char* barPadId)
+Communicator::Communicator(String host, String uri, int port, const char *barPadId)
 {
-    _baseUrl = baseUrl;
+    _client.setTimeout(TimeoutMs);
+    _host = host;
+    _uri = uri;
+    _port = port;
+
+    _heartbeatUri = String("/api/v1/heartbeat");
+    _requestWaiterUri = String("/api/v1/request/waiter");
+    _requestBillUri = String("/api/v1/request/bill");
+
     _barPadId = barPadId;
 
     _heartbeatJson = "{\"tableid\":\"";
@@ -41,74 +61,70 @@ Communicator::Communicator(const char* baseUrl, const char* barPadId)
 
     // Space to insert 2 UID - table (BarPad) and request
     _requestBuffer = new char[strlen(_requestFmt) + 2 * 32 + 1];
-    // Serial.print("Heartbeat JSON: ");
-    // Serial.println(_heartbeatJson);
 }
 
 bool Communicator::Heartbeat()
 {
-    // String url = _baseUrl + "heartbeat";
-    const char url[] = "http://192.168.0.105:8079/api/v1/heartbeat";
-    Serial.print("POSTing Heartbeat to: ");
-    Serial.println(url);
-    
-    // _client.begin(url.c_str());
-    _client.begin(url);
-    ulong now = millis();
-    ulong timeoustMs = 10000;
-    while (_client.connected() == 0 && millis() - now < timeoustMs)
-    {
-        Serial.print(".");
-        delay(50);
-    }
-    Serial.println("");
-    _client.setTimeout(10000);
-    int responseCode = _client.POST(_heartbeatJson);
-    _client.end();
+    DebugRequestUri("POSTing Heartbeat to: ", _host.c_str(), _heartbeatUri.c_str(), _port);
 
-    // HTTPClient client;
-    // client.begin("http://192.168.0.105:8079/api/v1/heartbeat");
-    // ulong now = millis();
-    // ulong timeoustMs = 10000;
-    // while (client.connected() == 0 && millis() - now < timeoustMs)
-    // {
-    //     Serial.print(".");
-    //     delay(50);
-    // }
-    // Serial.println("");
-    
-    // client.setTimeout(10000);
-    // int responseCode = client.POST(_heartbeatJson);
-    // client.end();
+    _client.begin(_host, _port, _heartbeatUri);
+    bool isConnected = IsHttpClientConnected(&_client, TimeoutMs);
+    int responseCode = _client.POST(_heartbeatJson);
     Serial.print("Response code of heartbeat: ");
     Serial.println(responseCode);
-    
+    if (responseCode > 199 && responseCode < 300)
+    {
+        String response = _client.getString();
+        Serial.println(response);
+    }
+
+    _client.end();
+
     return responseCode == 200;
 }
 
 bool Communicator::RequestWaiter(const char *requestId)
 {
-    String url = _baseUrl + "request/waiter";
+    DebugRequestUri("POSTing request for waiter to: ", _host.c_str(), _requestWaiterUri.c_str(), _port);
     sprintf(_requestBuffer, _requestFmt, _barPadId.c_str(), requestId);
-    Serial.print("POSTing request for waiter to: ");
-    Serial.println(url);
     Serial.println(_requestBuffer);
-    _client.begin(url.c_str());
-    _client.setTimeout(10000);
 
+    _client.begin(_host, _port, _requestWaiterUri);
+    IsHttpClientConnected(&_client, TimeoutMs);
     int responseCode = _client.POST(_requestBuffer);
     Serial.print("Response code of request for waiter: ");
     Serial.println(responseCode);
+    if (responseCode > 199 && responseCode < 300)
+    {
+        String response = _client.getString();
+        Serial.println(response);
+    }
 
     _client.end();
-    
+
     return responseCode == 200;
 }
 
 bool Communicator::RequestBill(const char *requestId)
 {
-    Serial.println("Stub for bill request...");
-    return false;
+    DebugRequestUri("POSTing request for bill to: ", _host.c_str(), _requestBillUri.c_str(), _port);
+    sprintf(_requestBuffer, _requestFmt, _barPadId.c_str(), requestId);
+    Serial.println(_requestBuffer);
+
+    _client.begin(_host, _port, _requestBillUri);
+    IsHttpClientConnected(&_client, TimeoutMs);
+    int responseCode = _client.POST(_requestBuffer);
+    Serial.print("Response code of request for bill: ");
+    Serial.println(responseCode);
+    if (responseCode > 199 && responseCode < 300)
+    {
+        String response = _client.getString();
+        Serial.println(response);
+    }
+
+    _client.end();
+
+    return responseCode == 200;
 }
 
 bool Communicator::CancelAllRequests()
@@ -117,14 +133,34 @@ bool Communicator::CancelAllRequests()
     return false;
 }
 
+bool Communicator::IsHttpClientConnected(HTTPClient *client, ulong timeoutMs)
+{
+    ulong now = millis();
+    while (client->connected() == 0 && millis() - now < timeoutMs)
+    {
+        Serial.print(".");
+        delay(50);
+    }
+    Serial.println("");
+
+    return client->connected();
+}
+
+void Communicator::DebugRequestUri(const char *msg, const char *host, const char *uri, int port)
+{
+    Serial.print(msg);
+    Serial.print(host);
+    Serial.print(":");
+    Serial.print(port);
+    Serial.println(uri);
+}
 
 Communicator::~Communicator()
 {
     if (_requestBuffer != nullptr)
     {
-        delete []_requestBuffer;
+        delete[] _requestBuffer;
     }
 }
-
 
 #endif

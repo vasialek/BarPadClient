@@ -28,9 +28,9 @@ const int WiFiServing = 4;
 
 HttpHandler _handler;
 Notifier _notifier;
-Communicator _communicator("http://192.168.0.105:8079/api/v1/", "TableId_1234567890");
+Communicator _communicator("192.168.0.105", "/api/v1/", 8079, "TableId_1234567890");
 // Communicator _communicator("http://192.168.0.100:8079/api/v1/", "TableId_1234567890");
-UserRequestsRepository _requestsRepository;
+UserRequestsRepository _requestsRepository(&_communicator);
 AnalogButtons _buttons(A0);
 
 int _currentState = WiFiClientInitializing;
