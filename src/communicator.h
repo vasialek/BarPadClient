@@ -33,10 +33,10 @@ private:
 
 public:
     Communicator(String host, String uri, int port, const char *barPadId);
-    virtual bool Heartbeat() override;
-    virtual bool RequestWaiter(const char *requestId) override;
-    virtual bool RequestBill(const char *requestId) override;
-    virtual bool CancelAllRequests() override;
+    virtual bool Heartbeat(const char *tableId) override;
+    virtual bool RequestWaiter(const char *tableId, const char *requestId) override;
+    virtual bool RequestBill(const char *tableId, const char *requestId) override;
+    virtual bool CancelAllRequests(const char *tableId) override;
     ~Communicator();
 };
 
@@ -63,7 +63,7 @@ Communicator::Communicator(String host, String uri, int port, const char *barPad
     _requestBuffer = new char[strlen(_requestFmt) + 2 * 32 + 1];
 }
 
-bool Communicator::Heartbeat()
+bool Communicator::Heartbeat(const char *tableId)
 {
     DebugRequestUri("POSTing Heartbeat to: ", _host.c_str(), _heartbeatUri.c_str(), _port);
 
@@ -83,7 +83,7 @@ bool Communicator::Heartbeat()
     return responseCode == 200;
 }
 
-bool Communicator::RequestWaiter(const char *requestId)
+bool Communicator::RequestWaiter(const char *tableId, const char *requestId)
 {
     DebugRequestUri("POSTing request for waiter to: ", _host.c_str(), _requestWaiterUri.c_str(), _port);
     sprintf(_requestBuffer, _requestFmt, _barPadId.c_str(), requestId);
@@ -105,7 +105,7 @@ bool Communicator::RequestWaiter(const char *requestId)
     return responseCode == 200;
 }
 
-bool Communicator::RequestBill(const char *requestId)
+bool Communicator::RequestBill(const char *tableId, const char *requestId)
 {
     DebugRequestUri("POSTing request for bill to: ", _host.c_str(), _requestBillUri.c_str(), _port);
     sprintf(_requestBuffer, _requestFmt, _barPadId.c_str(), requestId);
@@ -127,7 +127,7 @@ bool Communicator::RequestBill(const char *requestId)
     return responseCode == 200;
 }
 
-bool Communicator::CancelAllRequests()
+bool Communicator::CancelAllRequests(const char *tableId)
 {
     Serial.println("Stub for cancel all requests...");
     return false;
