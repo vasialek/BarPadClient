@@ -30,7 +30,7 @@ HttpHandler _handler;
 Notifier _notifier;
 Communicator _communicator("192.168.0.105", "/api/v1/", 8079, "TableId_1234567890");
 // Communicator _communicator("http://192.168.0.100:8079/api/v1/", "TableId_1234567890");
-UserRequestsRepository _requestsRepository(&_communicator);
+UserRequestsRepository _requestsRepository(TableId, &_communicator);
 AnalogButtons _buttons(A0);
 
 int _currentState = WiFiClientInitializing;
@@ -110,7 +110,7 @@ void loop()
   static ulong lastHeartbeatAt = 0;
   if (lastHeartbeatAt == 0 || millis() > lastHeartbeatAt + 30000)
   {
-    _communicator.Heartbeat();
+    _communicator.Heartbeat(TableId);
     lastHeartbeatAt = millis();
   }
   
