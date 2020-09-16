@@ -1,6 +1,6 @@
 #include <unity.h>
 #include "userrequestsrepository.h"
-#include "mocks\mockCommunicator.h"
+#include "..\lib\mocks\mockCommunicator.h"
 
 const char TableId[33] = "FakeTableIdForTest";
 
