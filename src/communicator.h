@@ -8,10 +8,12 @@
 #endif
 #include <stdio.h>
 #include "interfaces\icommunicator.h"
+#include "interfaces\irequestbuilder.h"
 
 class Communicator : public ICommunicator
 {
 private:
+    IRequestBuilder *_requestBuilder = nullptr;
     const ulong TimeoutMs = 10000;
     HTTPClient _client;
     String _host;
@@ -22,26 +24,20 @@ private:
     String _requestWaiterUri;
     String _requestBillUri;
 
-    String _barPadId;
-    String _heartbeatJson;
-    // Format bill/waiter requests payload
-    const char *_requestFmt = "{\"tableid\":\"%s\",\"requestid\":\"%s\"}";
-    char *_requestBuffer = nullptr;
-
     bool IsHttpClientConnected(HTTPClient *client, ulong timeoutMs);
     void DebugRequestUri(const char *msg, const char *host, const char *uri, int port);
 
 public:
-    Communicator(String host, String uri, int port, const char *barPadId);
+    Communicator(IRequestBuilder *requestBuilder, String host, String uri, int port);
     virtual bool Heartbeat(const char *tableId) override;
     virtual bool RequestWaiter(const char *tableId, const char *requestId) override;
     virtual bool RequestBill(const char *tableId, const char *requestId) override;
     virtual bool CancelAllRequests(const char *tableId) override;
-    ~Communicator();
 };
 
-Communicator::Communicator(String host, String uri, int port, const char *barPadId)
+Communicator::Communicator(IRequestBuilder *requestBuilder, String host, String uri, int port)
 {
+    _requestBuilder = requestBuilder;
     _client.setTimeout(TimeoutMs);
     _host = host;
     _uri = uri;
@@ -51,16 +47,7 @@ Communicator::Communicator(String host, String uri, int port, const char *barPad
     _requestWaiterUri = String("/api/v1/request/waiter");
     _requestBillUri = String("/api/v1/request/bill");
 
-    _barPadId = barPadId;
-
-    _heartbeatJson = "{\"tableid\":\"";
-    _heartbeatJson.concat(barPadId);
-    _heartbeatJson.concat("\"}");
-
     _client.setReuse(true);
-
-    // Space to insert 2 UID - table (BarPad) and request
-    _requestBuffer = new char[strlen(_requestFmt) + 2 * 32 + 1];
 }
 
 bool Communicator::Heartbeat(const char *tableId)
@@ -69,7 +56,7 @@ bool Communicator::Heartbeat(const char *tableId)
 
     _client.begin(_host, _port, _heartbeatUri);
     bool isConnected = IsHttpClientConnected(&_client, TimeoutMs);
-    int responseCode = _client.POST(_heartbeatJson);
+    int responseCode = _client.POST(_requestBuilder->BuildHeartbeat(tableId));
     Serial.print("Response code of heartbeat: ");
     Serial.println(responseCode);
     if (responseCode > 199 && responseCode < 300)
@@ -86,12 +73,12 @@ bool Communicator::Heartbeat(const char *tableId)
 bool Communicator::RequestWaiter(const char *tableId, const char *requestId)
 {
     DebugRequestUri("POSTing request for waiter to: ", _host.c_str(), _requestWaiterUri.c_str(), _port);
-    sprintf(_requestBuffer, _requestFmt, _barPadId.c_str(), requestId);
-    Serial.println(_requestBuffer);
+    const char *request = _requestBuilder->BuildWaiterRequest(tableId, requestId);
+    Serial.println(request);
 
     _client.begin(_host, _port, _requestWaiterUri);
     IsHttpClientConnected(&_client, TimeoutMs);
-    int responseCode = _client.POST(_requestBuffer);
+    int responseCode = _client.POST(request);
     Serial.print("Response code of request for waiter: ");
     Serial.println(responseCode);
     if (responseCode > 199 && responseCode < 300)
@@ -108,12 +95,12 @@ bool Communicator::RequestWaiter(const char *tableId, const char *requestId)
 bool Communicator::RequestBill(const char *tableId, const char *requestId)
 {
     DebugRequestUri("POSTing request for bill to: ", _host.c_str(), _requestBillUri.c_str(), _port);
-    sprintf(_requestBuffer, _requestFmt, _barPadId.c_str(), requestId);
-    Serial.println(_requestBuffer);
+    const char *request = _requestBuilder->BuildBillRequest(tableId, requestId);
+    Serial.println(request);
 
     _client.begin(_host, _port, _requestBillUri);
     IsHttpClientConnected(&_client, TimeoutMs);
-    int responseCode = _client.POST(_requestBuffer);
+    int responseCode = _client.POST(request);
     Serial.print("Response code of request for bill: ");
     Serial.println(responseCode);
     if (responseCode > 199 && responseCode < 300)
@@ -153,14 +140,6 @@ void Communicator::DebugRequestUri(const char *msg, const char *host, const char
     Serial.print(":");
     Serial.print(port);
     Serial.println(uri);
-}
-
-Communicator::~Communicator()
-{
-    if (_requestBuffer != nullptr)
-    {
-        delete[] _requestBuffer;
-    }
 }
 
 #endif

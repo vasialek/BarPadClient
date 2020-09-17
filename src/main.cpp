@@ -19,6 +19,7 @@
 #include "communicator.h"
 #include "userrequestsrepository.h"
 #include "analogbuttons.h"
+#include "requestbuilder.h"
 
 // Possible WiFi states
 const int WiFiClientInitializing = 0;
@@ -28,8 +29,8 @@ const int WiFiServing = 4;
 
 HttpHandler _handler;
 Notifier _notifier;
-Communicator _communicator("192.168.0.105", "/api/v1/", 8079, "TableId_1234567890");
-// Communicator _communicator("http://192.168.0.100:8079/api/v1/", "TableId_1234567890");
+RequestBuilder requestBuilder;
+Communicator _communicator(&requestBuilder, "192.168.0.105", "/api/v1/", 8079);
 UserRequestsRepository _requestsRepository(TableId, &_communicator);
 AnalogButtons _buttons(A0);
 
