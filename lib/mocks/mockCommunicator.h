@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include "interfaces\icommunicator.h"
 
 class MockCommunicator : public ICommunicator
