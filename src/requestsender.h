@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <cstring>
 #include "interfaces\irequestsender.h"
 #include "interfaces\icommunicator.h"
@@ -14,12 +15,17 @@ private:
     // Store bill request
     char _billTableIdToSend[33];
     char _billRequestIdToSend[33];
+    // Store cancel all request
+    char _cancelAllTableIdToSend[33];
+    
     void ResetWaiterRequest();
     void ResetBillRequest();
+    void ResetCancelAllRequests();
 public:
     RequestSender(ICommunicator *communicator);
-    void EnqueueWaiterRequest(const char *requestId, const char *payload) override;
-    void EnqueueBillRequest(const char *requestId, const char *payload) override;
+    void EnqueueWaiterRequest(const char *tableId, const char *requestId) override;
+    void EnqueueBillRequest(const char *tableId, const char *requestId) override;
+    void EnqueueCancelAllRequests(const char *tableId) override;
     void ProcessRequests() override;
     ~RequestSender();
 };
@@ -47,30 +53,48 @@ void RequestSender::ProcessRequests()
             ResetBillRequest();
         }
     }
+
+    if (_cancelAllTableIdToSend[0] != 0)
+    {
+        if (_communicator->CancelAllRequests(_cancelAllTableIdToSend))
+        {
+            ResetCancelAllRequests();
+        }
+        
+    }
+    
 }
 
-void RequestSender::EnqueueWaiterRequest(const char *requestId, const char *payload)
+void RequestSender::EnqueueWaiterRequest(const char *tableId, const char *requestId)
 {
+    strcpy(_waiterTableIdToSend, tableId);
     strcpy(_waiterRequestIdToSend, requestId);
-    strcpy(_waiterTableIdToSend, payload);
 }
 
-void RequestSender::EnqueueBillRequest(const char *requestId, const char *payload)
+void RequestSender::EnqueueBillRequest(const char *tableId, const char *requestId)
 {
+    strcpy(_billTableIdToSend, tableId);
     strcpy(_billRequestIdToSend, requestId);
-    strcpy(_billTableIdToSend, payload);
+}
+
+void RequestSender::EnqueueCancelAllRequests(const char *tableId)
+{
+    strcpy(_cancelAllTableIdToSend, tableId);
 }
 
 void RequestSender::ResetWaiterRequest()
 {
-    _waiterRequestIdToSend[0] = 0;
-    _waiterTableIdToSend[0] = 0;
+    _waiterRequestIdToSend[0] = _waiterTableIdToSend[0] = 0;
 }
 
 void RequestSender::ResetBillRequest()
 {
-    _billRequestIdToSend[0] = 0;
-    _billTableIdToSend[0] = 0;
+    _billRequestIdToSend[0] = _billTableIdToSend[0] = 0;
+}
+
+void RequestSender::ResetCancelAllRequests()
+{
+    _cancelAllTableIdToSend[0] = 0;
 }
 
 RequestSender::~RequestSender()
