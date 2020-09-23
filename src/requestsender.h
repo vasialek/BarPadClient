@@ -80,6 +80,10 @@ void RequestSender::EnqueueBillRequest(const char *tableId, const char *requestI
 void RequestSender::EnqueueCancelAllRequests(const char *tableId)
 {
     strcpy(_cancelAllTableIdToSend, tableId);
+
+    // Do not send request for waiter of bill
+    ResetWaiterRequest();
+    ResetBillRequest();
 }
 
 void RequestSender::ResetWaiterRequest()

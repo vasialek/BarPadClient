@@ -140,11 +140,26 @@ void test_processrequests_cancelallrequests_repeat_on_error()
     TEST_ASSERT_EQUAL_STRING(TableId, _mockCommunicator.TableIdCancelAllCalled);
 }
 
+
+void test_processrequests_noretries_after_cancellation()
+{
+    _mockCommunicator.ResetTestResults();
+    _sender.EnqueueWaiterRequest(TableId, BillRequestId);
+    _sender.EnqueueBillRequest(TableId, BillRequestId);
+
+    _sender.EnqueueCancelAllRequests(TableId);
+    _sender.ProcessRequests();
+
+    TEST_ASSERT_EQUAL_INT32(0, _mockCommunicator.RequestWaiterCalls);
+    TEST_ASSERT_EQUAL_INT32(0, _mockCommunicator.RequestBillCalls);
+}
+
 int main()
 {
     UNITY_BEGIN();
 
     RUN_TEST(test_nocalls_if_not_enqueued);
+    RUN_TEST(test_processrequests_noretries_after_cancellation);
 
     // Waiter
     RUN_TEST(test_processrequests_for_waiter);
