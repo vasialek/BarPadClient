@@ -61,7 +61,7 @@ void MethodParams::CopyTo(char **destination, const char *source)
         return;
     }
     
-    std::cout << "Setting param: `" << source << "`" << std::endl;
+    // std::cout << "Setting param: `" << source << "`" << std::endl;
     size_t len = strlen(source);
     *destination = new char[len + 1];
     strcpy(*destination, source);
