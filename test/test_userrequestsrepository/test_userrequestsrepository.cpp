@@ -36,11 +36,15 @@ void test_requestwaiter_called()
 void test_requestbill_called()
 {
     _mockRequestSender.ResetTestResults();
+    _mockIdGenerator.SetNextResult("FakeRequestIdForBill");
     
     _repository->SetBillIsRequested();
 
-    // TEST_ASSERT_EQUAL_INT32(1, _mockCommunicator.RequestBillCalls);
-    // TEST_ASSERT_EQUAL_CHAR_ARRAY(TableId, _mockCommunicator.TableIdCalled, sizeof(TableId));
+    auto stat = _mockRequestSender.EnqueueBillRequestStat();
+    stat.Print();
+    TEST_ASSERT_EQUAL_INT32(1, stat.WasCalled());
+    TEST_ASSERT_EQUAL_CHAR_ARRAY(TableId, stat.GetParam1(), strlen(TableId));
+    TEST_ASSERT_EQUAL_CHAR_ARRAY("FakeRequestIdForBill", stat.GetParam2(), strlen("FakeRequestIdForBill"));
 }
 
 void test_requestwaiter_canceled()
@@ -75,7 +79,7 @@ int main()
     UNITY_BEGIN();
 
     RUN_TEST(test_requestwaiter_called);
-    // RUN_TEST(test_requestbill_called);
+    RUN_TEST(test_requestbill_called);
     // RUN_TEST(test_requestwaiter_canceled);
     // RUN_TEST(test_requestbill_is_canceled);
 

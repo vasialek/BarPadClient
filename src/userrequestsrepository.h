@@ -50,7 +50,7 @@ const char *UserRequestsRepository::SetBillIsRequested()
     if (IsBillRequested() == false)
     {
         strcpy(_billRequestId, _generator->Generate());
-        // _communicator->RequestBill(_tableId, _billRequestId);
+        _requestSender->EnqueueBillRequest(_tableId, _billRequestId);
     }
     return _billRequestId;
 }
