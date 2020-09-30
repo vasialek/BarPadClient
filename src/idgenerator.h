@@ -5,8 +5,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <cstring>
+#include "interfaces\iidgenerator.h"
 
-class IdGenerator
+class IdGenerator : public IIdGenerator
 {
 private:
     char *_buf;
@@ -16,7 +17,7 @@ public:
     static const int LengthOfId = 32;
     IdGenerator();
     ~IdGenerator();
-    const char* Generate();
+    const char* Generate() override;
 };
 
 IdGenerator::IdGenerator()
