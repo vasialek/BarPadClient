@@ -2,21 +2,22 @@
 #define USERREQUESTSREPOSITORY_H
 
 #include <iostream>
-#include "interfaces\icommunicator.h"
-#include "idgenerator.h"
+#include <cstring>
+#include "interfaces\irequestsender.h"
+#include "interfaces\iidgenerator.h"
 
 class UserRequestsRepository
 {
 private:
-    ICommunicator *_communicator = nullptr;
-    IdGenerator _generator;
+    IRequestSender *_requestSender = nullptr;
+    IIdGenerator *_generator = nullptr;
     char _tableId[33];
     char _waiterRequestId[33];
     char _billRequestId[33];
     void CancelWaiterRequest() { _waiterRequestId[0] = 0; }
     void CancelBillRequest() { _billRequestId[0] = 0; }
 public:
-    UserRequestsRepository(const char *tableId, ICommunicator *communicator);
+    UserRequestsRepository(const char *tableId, IRequestSender *requestSender, IIdGenerator *generator);
     const char *SetWaiterIsRequested();
     const char *SetBillIsRequested();
     void CancelAllRequest();
@@ -25,9 +26,10 @@ public:
     bool IsBillRequested() { return _billRequestId[0] != 0; }
 };
 
-UserRequestsRepository::UserRequestsRepository(const char *tableId, ICommunicator *communicator)
+UserRequestsRepository::UserRequestsRepository(const char *tableId, IRequestSender *requestSender, IIdGenerator *generator)
 {
-    _communicator = communicator;
+    _requestSender = requestSender;
+    _generator = generator;
     strncpy(_tableId, tableId, 32);
     _tableId[32] = 0;
     CancelAllRequest();
@@ -37,8 +39,8 @@ const char *UserRequestsRepository::SetWaiterIsRequested()
 {
     if (IsWaiterRequested() == false)
     {
-        strcpy(_waiterRequestId, _generator.Generate());
-        _communicator->RequestWaiter(_tableId, _waiterRequestId);
+        strcpy(_waiterRequestId, _generator->Generate());
+        _requestSender->EnqueueWaiterRequest(_tableId, _waiterRequestId);
     }
     return _waiterRequestId;
 }
@@ -47,8 +49,8 @@ const char *UserRequestsRepository::SetBillIsRequested()
 {
     if (IsBillRequested() == false)
     {
-        strcpy(_billRequestId, _generator.Generate());
-        _communicator->RequestBill(_tableId, _billRequestId);
+        strcpy(_billRequestId, _generator->Generate());
+        // _communicator->RequestBill(_tableId, _billRequestId);
     }
     return _billRequestId;
 }
@@ -58,13 +60,13 @@ bool UserRequestsRepository::CancelRequest(const char *requestId)
     if (strcmp(_waiterRequestId, requestId) == 0)
     {
         CancelWaiterRequest();
-        _communicator->CancelAllRequests(_tableId);
+        // _communicator->CancelAllRequests(_tableId);
         return true;
     }
     if (strcmp(_billRequestId, requestId) == 0)
     {
         CancelBillRequest();
-        _communicator->CancelAllRequests(_tableId);
+        // _communicator->CancelAllRequests(_tableId);
         return true;
     }
 

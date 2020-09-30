@@ -16,7 +16,9 @@
 #include "credentials.h"
 #include "httphandler.h"
 #include "notifier.h"
+#include "idgenerator.h"
 #include "communicator.h"
+#include "requestsender.h"
 #include "userrequestsrepository.h"
 #include "analogbuttons.h"
 #include "requestbuilder.h"
@@ -31,7 +33,9 @@ HttpHandler _handler;
 Notifier _notifier;
 RequestBuilder requestBuilder;
 Communicator _communicator(&requestBuilder, "192.168.0.105", "/api/v1/", 8079);
-UserRequestsRepository _requestsRepository(TableId, &_communicator);
+RequestSender _requestSender(&_communicator);
+IdGenerator generator;
+UserRequestsRepository _requestsRepository(TableId, &_requestSender, &generator);
 AnalogButtons _buttons(A0);
 
 int _currentState = WiFiClientInitializing;
