@@ -19,7 +19,7 @@ public:
     void EnqueueWaiterRequest(const char *tableId, const char *requestId);
     void EnqueueBillRequest(const char *tableId, const char *requestId) override;
     void EnqueueCancelAllRequests(const char *tableId) override;
-    void ProcessRequests() override;
+    void ProcessRequests(unsigned long waitBeforeRetryMs) override;
 
     void ResetTestResults()
     {
@@ -52,7 +52,7 @@ void MockRequestSender::EnqueueCancelAllRequests(const char *tableId)
 
 }
 
-void MockRequestSender::ProcessRequests()
+void MockRequestSender::ProcessRequests(unsigned long waitBeforeRetryMs)
 {
 
 }

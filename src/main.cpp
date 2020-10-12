@@ -22,6 +22,7 @@
 #include "userrequestsrepository.h"
 #include "analogbuttons.h"
 #include "requestbuilder.h"
+#include "datetimeprovider.h"
 
 // Possible WiFi states
 const int WiFiClientInitializing = 0;
@@ -31,14 +32,17 @@ const int WiFiServing = 4;
 
 HttpHandler _handler;
 Notifier _notifier;
+DateTimeProvider _dateTimeProvider;
 RequestBuilder requestBuilder;
-Communicator _communicator(&requestBuilder, "192.168.0.105", "/api/v1/", 8079);
-RequestSender _requestSender(&_communicator);
+Communicator _communicator(&requestBuilder, "192.168.0.102", "/api/v1/", 8079);
+RequestSender _requestSender(&_communicator, &_dateTimeProvider);
 IdGenerator generator;
 UserRequestsRepository _requestsRepository(TableId, &_requestSender, &generator);
 AnalogButtons _buttons(A0);
 
 int _currentState = WiFiClientInitializing;
+
+bool _doSomeTestThing = true;
 
 void NotifyStatus();
 void SetState(int state);
@@ -83,6 +87,21 @@ void loop()
 
   case WiFiServing:
     buttonPressed = _buttons.GetPressedButton();
+
+    if (Serial.available() > 0)
+    {
+      String data = Serial.readString();
+      Serial.print("Got command from Serial: ");
+      Serial.println(data);
+    }
+    
+
+    if (_doSomeTestThing)
+    {
+      buttonPressed = 1;
+      _doSomeTestThing = false;
+    }
+
     if (buttonPressed > 0)
     {
       Serial.print("Got pressed button: ");
@@ -105,6 +124,8 @@ void loop()
         break;
       }
     }
+
+    _requestSender.ProcessRequests();
     break;
     
 
