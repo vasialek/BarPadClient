@@ -211,13 +211,42 @@ void test_processrequests_cancelallrequests_repeat_on_error()
     _mockCommunicator.SetNextRequestResult(false);
     _sender.EnqueueCancelAllRequests(TableId);
 
+    _mockDateTimeProvider.SetNextMillis(0);
     _sender.ProcessRequests(WaitBeforRetryMs);
+    _mockDateTimeProvider.SetNextMillis(WaitBeforRetryMs);
     _sender.ProcessRequests(WaitBeforRetryMs);
 
     TEST_ASSERT_EQUAL_INT32(2, _mockCommunicator.CancelAllRequestsCalls);
     TEST_ASSERT_EQUAL_STRING(TableId, _mockCommunicator.TableIdCancelAllCalled);
 }
 
+void test_cancelallrequests_noretry_when_delay_too_short()
+{
+    _mockCommunicator.ResetTestResults();
+    _mockCommunicator.SetNextRequestResult(false);
+    _sender.EnqueueCancelAllRequests(TableId);
+    _mockDateTimeProvider.SetNextMillis(0);
+    _sender.ProcessRequests(WaitBeforRetryMs);
+   
+    _mockDateTimeProvider.SetNextMillis(WaitBeforRetryMs - 1);
+    _sender.ProcessRequests(WaitBeforRetryMs);
+
+    TEST_ASSERT_EQUAL_INT32(1, _mockCommunicator.CancelAllRequestsCalls);
+}
+
+void test_cancelallrequess_newcall_without_delay()
+{
+    _mockCommunicator.ResetTestResults();
+    _mockDateTimeProvider.SetNextMillis(WaitBeforRetryMs);
+    _mockCommunicator.SetNextRequestResult(false);
+    _sender.EnqueueCancelAllRequests(TableId);
+
+    _sender.ProcessRequests(WaitBeforRetryMs);
+    _sender.EnqueueCancelAllRequests(TableId);
+    _sender.ProcessRequests(WaitBeforRetryMs);
+
+    TEST_ASSERT_EQUAL_INT32(2, _mockCommunicator.CancelAllRequestsCalls);
+}
 
 void test_processrequests_noretries_after_cancellation()
 {
@@ -257,6 +286,8 @@ int main()
     RUN_TEST(test_processrequests_for_cancelallrequests);
     RUN_TEST(test_processrequests_cancelallrequests_once_if_ok);
     RUN_TEST(test_processrequests_cancelallrequests_repeat_on_error);
+    RUN_TEST(test_cancelallrequests_noretry_when_delay_too_short);
+    RUN_TEST(test_cancelallrequess_newcall_without_delay);
 
     UNITY_END();
 }

@@ -9,8 +9,8 @@
 class RequestSender : public IRequestSender
 {
 private:
-    const int LastCallMinValue = -10000L;
-    
+    const unsigned long LastCallMinValue = -10000L;
+
     ICommunicator *_communicator = nullptr;
     IDateTimeProvider *_dateTimeProvider = nullptr;
     // Store waiter request
@@ -23,6 +23,7 @@ private:
     char _billRequestIdToSend[33];
     // Store cancel all request
     char _cancelAllTableIdToSend[33];
+    unsigned long _lastCancelAllRequestCallAt = LastCallMinValue;
     
     void ResetWaiterRequest();
     void ResetBillRequest();
@@ -30,6 +31,7 @@ private:
     unsigned long GetEllapsedMsFromLastRun(unsigned long lastRunMs);
     bool IsWaiterDelayEnough(unsigned long waitBeforeRetryMs);
     bool IsBillDelayEnough(unsigned long waitBeforeRetryMs);
+    bool IsCancelAllRequestsDelayEnough(unsigned long waitBeforeRetryMs);
 public:
     RequestSender(ICommunicator *communicator, IDateTimeProvider *dateTimeProvider);
     void EnqueueWaiterRequest(const char *tableId, const char *requestId) override;
@@ -75,11 +77,14 @@ void RequestSender::ProcessRequests(unsigned long waitBeforeRetryMs)
 
     if (_cancelAllTableIdToSend[0] != 0)
     {
-        if (_communicator->CancelAllRequests(_cancelAllTableIdToSend))
+        if (IsCancelAllRequestsDelayEnough(waitBeforeRetryMs))
         {
-            ResetCancelAllRequests();
+            _lastCancelAllRequestCallAt = _dateTimeProvider->millis();
+            if (_communicator->CancelAllRequests(_cancelAllTableIdToSend))
+            {
+                ResetCancelAllRequests();
+            }
         }
-        
     }
 }
 
@@ -99,6 +104,7 @@ void RequestSender::EnqueueBillRequest(const char *tableId, const char *requestI
 
 void RequestSender::EnqueueCancelAllRequests(const char *tableId)
 {
+    _lastCancelAllRequestCallAt = LastCallMinValue;
     strcpy(_cancelAllTableIdToSend, tableId);
 
     // Do not send request for waiter of bill
@@ -116,6 +122,12 @@ bool RequestSender::IsWaiterDelayEnough(unsigned long waitBeforeRetryMs)
 bool RequestSender::IsBillDelayEnough(unsigned long waitBeforeRetryMs)
 {
     unsigned long ellapsedFromLastRunMs = GetEllapsedMsFromLastRun(_lastBillCallAt);
+    return ellapsedFromLastRunMs >= waitBeforeRetryMs;
+}
+
+bool RequestSender::IsCancelAllRequestsDelayEnough(unsigned long waitBeforeRetryMs)
+{
+    unsigned long ellapsedFromLastRunMs = GetEllapsedMsFromLastRun(_lastCancelAllRequestCallAt);
     return ellapsedFromLastRunMs >= waitBeforeRetryMs;
 }
 
