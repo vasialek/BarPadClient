@@ -9,14 +9,16 @@
 class RequestSender : public IRequestSender
 {
 private:
+    const int LastCallMinValue = -10000L;
+    
     ICommunicator *_communicator = nullptr;
     IDateTimeProvider *_dateTimeProvider = nullptr;
     // Store waiter request
-    unsigned long _lastWaiterCallAt = -100000L;
+    unsigned long _lastWaiterCallAt = LastCallMinValue;
     char _waiterTableIdToSend[33];
     char _waiterRequestIdToSend[33];
     // Store bill request
-    unsigned long _lastBillCallAt = -100000L;
+    unsigned long _lastBillCallAt = LastCallMinValue;
     char _billTableIdToSend[33];
     char _billRequestIdToSend[33];
     // Store cancel all request
@@ -79,18 +81,18 @@ void RequestSender::ProcessRequests(unsigned long waitBeforeRetryMs)
         }
         
     }
-    
 }
 
 void RequestSender::EnqueueWaiterRequest(const char *tableId, const char *requestId)
 {
-    _lastWaiterCallAt = 0;
+    _lastWaiterCallAt = LastCallMinValue;
     strcpy(_waiterTableIdToSend, tableId);
     strcpy(_waiterRequestIdToSend, requestId);
 }
 
 void RequestSender::EnqueueBillRequest(const char *tableId, const char *requestId)
 {
+    _lastBillCallAt = LastCallMinValue;
     strcpy(_billTableIdToSend, tableId);
     strcpy(_billRequestIdToSend, requestId);
 }

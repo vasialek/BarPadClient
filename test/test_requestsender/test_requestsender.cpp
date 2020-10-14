@@ -48,20 +48,6 @@ void test_waiter_noretry_when_delay_too_short()
     TEST_ASSERT_EQUAL_INT32(1, _mockCommunicator.RequestWaiterCalls);
 }
 
-void test_waiter_newcall_without_delay()
-{
-    _mockCommunicator.ResetTestResults();
-    _mockDateTimeProvider.SetNextMillis(WaitBeforRetryMs);
-    _mockCommunicator.SetNextRequestResult(false);
-    _sender.EnqueueWaiterRequest(TableId, WaiterRequestId);
-
-    _sender.ProcessRequests(WaitBeforRetryMs);
-    _sender.EnqueueWaiterRequest(TableId, WaiterRequestId);
-    _sender.ProcessRequests(WaitBeforRetryMs);
-
-    TEST_ASSERT_EQUAL_INT32(2, _mockCommunicator.RequestWaiterCalls);
-}
-
 // Waiter
 void test_processrequests_for_waiter()
 {
@@ -105,6 +91,20 @@ void test_processrequests_waiter_repeat_on_error()
     TEST_ASSERT_EQUAL_INT32(2, _mockCommunicator.RequestWaiterCalls);
     TEST_ASSERT_EQUAL_STRING(TableId, _mockCommunicator.TableIdWaiterCalled);
     TEST_ASSERT_EQUAL_STRING(WaiterRequestId, _mockCommunicator.RequestIdWaiterCalled);
+}
+
+void test_waiter_newcall_without_delay()
+{
+    _mockCommunicator.ResetTestResults();
+    _mockDateTimeProvider.SetNextMillis(WaitBeforRetryMs);
+    _mockCommunicator.SetNextRequestResult(false);
+    _sender.EnqueueWaiterRequest(TableId, WaiterRequestId);
+
+    _sender.ProcessRequests(WaitBeforRetryMs);
+    _sender.EnqueueWaiterRequest(TableId, WaiterRequestId);
+    _sender.ProcessRequests(WaitBeforRetryMs);
+
+    TEST_ASSERT_EQUAL_INT32(2, _mockCommunicator.RequestWaiterCalls);
 }
 
 // Bill request
@@ -164,6 +164,20 @@ void test_bill_noretry_when_delay_too_short()
     _sender.ProcessRequests(WaitBeforRetryMs);
 
     TEST_ASSERT_EQUAL_INT32(1, _mockCommunicator.RequestBillCalls);
+}
+
+void test_bill_newcall_without_delay()
+{
+    _mockCommunicator.ResetTestResults();
+    _mockDateTimeProvider.SetNextMillis(WaitBeforRetryMs);
+    _mockCommunicator.SetNextRequestResult(false);
+    _sender.EnqueueBillRequest(TableId, BillRequestId);
+
+    _sender.ProcessRequests(WaitBeforRetryMs);
+    _sender.EnqueueBillRequest(TableId, BillRequestId);
+    _sender.ProcessRequests(WaitBeforRetryMs);
+
+    TEST_ASSERT_EQUAL_INT32(2, _mockCommunicator.RequestBillCalls);
 }
 
 // Cancel requests
@@ -237,6 +251,7 @@ int main()
     RUN_TEST(test_processrequests_bill_once_if_ok);
     RUN_TEST(test_processrequests_bill_repeat_on_error);
     RUN_TEST(test_bill_noretry_when_delay_too_short);
+    RUN_TEST(test_bill_newcall_without_delay);
 
     // Cancellation
     RUN_TEST(test_processrequests_for_cancelallrequests);
