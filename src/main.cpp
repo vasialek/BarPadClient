@@ -125,7 +125,7 @@ void loop()
       }
     }
 
-    _requestSender.ProcessRequests();
+    _requestSender.ProcessRequests(DelayBeforeCalllRetriesMs);
     break;
     
 

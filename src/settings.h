@@ -1,6 +1,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+const unsigned long DelayBeforeCalllRetriesMs = 20000;
+
 const char TableId[33] = "FakeTableId";
 
 const int PinRed = 15;
