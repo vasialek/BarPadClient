@@ -4,14 +4,14 @@
 
 class DateTimeProvider : public IDateTimeProvider
 {
-private:
+public:
     unsigned long millis() override;
 };
 
 unsigned long DateTimeProvider::millis()
 {
     #ifdef ARDUINO
-        return millis();
+        return ::millis();
     #else
         return 0;
     #endif
