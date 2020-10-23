@@ -3,7 +3,7 @@
 
 const unsigned long DelayBeforeCalllRetriesMs = 20000;
 
-const char TableId[33] = "FakeTableId";
+const char TableId[33] = "FakeTableId_00000000000000000010";
 
 const int PinRed = 15;
 const int PinBlue = 13;

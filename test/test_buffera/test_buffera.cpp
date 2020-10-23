@@ -51,9 +51,13 @@ void test_set_after_null()
 
 int main()
 {
+    UNITY_BEGIN();
+
     RUN_TEST(test_ctor);
     RUN_TEST(test_set_twice);
     RUN_TEST(test_set_longer);
     RUN_TEST(test_set_null);
     RUN_TEST(test_set_after_null);
+
+    UNITY_END();
 }

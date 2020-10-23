@@ -36,8 +36,12 @@ void test_parse_incorrect()
 
 int main()
 {
+    UNITY_BEGIN();
+
     RUN_TEST(test_setapihost_commandId);
     RUN_TEST(test_setapihost_commandParam);
     RUN_TEST(test_setapihost_commandParam_when_no_param);
     RUN_TEST(test_parse_incorrect);
+
+    UNITY_END();
 }
