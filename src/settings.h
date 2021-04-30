@@ -5,6 +5,8 @@ const unsigned long DelayBeforeCalllRetriesMs = 20000;
 
 const char TableId[33] = "FakeTableId_00000000000000000010";
 
+const int MaxPayloadLength = 128;
+
 const int PinRed = 15;
 const int PinBlue = 13;
 const int PinGreen = 12;
