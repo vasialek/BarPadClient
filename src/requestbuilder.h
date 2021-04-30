@@ -10,7 +10,7 @@ class RequestBuilder : public IRequestBuilder
 private:
     // Format heartbeat request
     int _sizeOfHeartbeat = -1;
-    const char *_heartbeatFmt = "{\"tableid\":\"%s\"}";
+    const char *_heartbeatFmt = "{\"tableid\":\"%s\",\"payload\":\"%s\"}";
     char *_heartbeatBuffer = nullptr;
     // Format bill/waiter requests payload
     int _sizeOfRequest = -1;
@@ -20,6 +20,7 @@ private:
 public:
     RequestBuilder();
     const char *BuildHeartbeat(const char *tableId) override;
+    const char *BuildHeartbeat(const char *tableId, const char *payload) override;
     const char *BuildWaiterRequest(const char *tableId, const char *requestId) override;
     const char *BuildBillRequest(const char *tableId, const char *requestId) override;
     ~RequestBuilder();
@@ -31,13 +32,18 @@ RequestBuilder::RequestBuilder()
     _sizeOfRequest = strlen(_requestFmt) + 2 * 32 + 10;
     _requestBuffer = new char[_sizeOfRequest + 1];
     // Space to insert table ID (BarPad)
-    _sizeOfHeartbeat = strlen(_heartbeatFmt) + 32;
+    _sizeOfHeartbeat = strlen(_heartbeatFmt) + 32 + 128;
     _heartbeatBuffer = new char[_sizeOfHeartbeat + 1];
 }
 
 const char *RequestBuilder::BuildHeartbeat(const char *tableId)
 {
-    snprintf(_heartbeatBuffer, _sizeOfHeartbeat, _heartbeatFmt, tableId);
+    return BuildHeartbeat(tableId, nullptr);
+}
+
+const char *RequestBuilder::BuildHeartbeat(const char *tableId, const char *payload)
+{
+    snprintf(_heartbeatBuffer, _sizeOfHeartbeat, _heartbeatFmt, tableId, payload == nullptr ? "" : payload);
     return _heartbeatBuffer;
 }
 

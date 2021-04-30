@@ -2,6 +2,7 @@
 #include "requestbuilder.h"
 
 const char TableId[33] = "FakeTableIdForTest";
+const char Payload[] = "This is long payload to store some telemetry";
 
 RequestBuilder _builder;
 
@@ -12,7 +13,16 @@ void test_buildheartbeat()
     const char *request = _builder.BuildHeartbeat(TableId);
 
     TEST_ASSERT_NOT_NULL(request);
-    TEST_ASSERT_EQUAL_STRING("{\"tableid\":\"FakeTableIdForTest\"}", request);
+    TEST_ASSERT_EQUAL_STRING("{\"tableid\":\"FakeTableIdForTest\",\"payload\":\"\"}", request);
+}
+
+void test_buildheartbeat_whenpayload()
+{
+    const char *request = _builder.BuildHeartbeat(TableId, Payload);
+
+    TEST_ASSERT_NOT_NULL(request);
+    TEST_ASSERT_CONTAINS("\"payload\":", request);
+    TEST_ASSERT_CONTAINS(Payload, request);
 }
 
 void test_buildwaiterrequest()
@@ -36,6 +46,7 @@ int main()
     UNITY_BEGIN();
 
     RUN_TEST(test_buildheartbeat);
+    RUN_TEST(test_buildheartbeat_whenpayload);
     RUN_TEST(test_buildwaiterrequest);
     RUN_TEST(test_buildbillrequest);
 
