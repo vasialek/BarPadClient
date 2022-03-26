@@ -29,6 +29,7 @@ const int WiFiClientInitializing = 0;
 const int WiFiClientConnecting = 1;
 const int WiFiSetup = 2;
 const int WiFiServing = 4;
+const int WiFiConfiguration = 8;
 
 HttpHandler _handler;
 Notifier _notifier;
@@ -52,7 +53,6 @@ void Test();
 void setup()
 {
   Serial.begin(9600);
-
   pinMode(PinRed, OUTPUT);
   pinMode(PinGreen, OUTPUT);
   pinMode(PinBlue, OUTPUT);
@@ -96,11 +96,11 @@ void loop()
     }
     
 
-    if (_doSomeTestThing)
-    {
-      buttonPressed = 1;
-      _doSomeTestThing = false;
-    }
+    // if (_doSomeTestThing)
+    // {
+    //   buttonPressed = 1;
+    //   _doSomeTestThing = false;
+    // }
 
     if (buttonPressed > 0)
     {

@@ -11,6 +11,7 @@ void CanEncrypt()
     std::cout << "Encrpypted: `" << actual << "`\n";
 
     TEST_ASSERT_NOT_NULL(actual);
+    TEST_ASSERT_EQUAL_STRING("A8Kcw57Dq8KLVHDCnl0X", actual);
 }
 
 void EncryptDecrypt()
